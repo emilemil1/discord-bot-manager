@@ -1,6 +1,6 @@
 {
   "name": "discord-dbm",
-  "version": "1.7.7",
+  "version": "1.7.8",
   "description": "Discord bot management framework.",
   "main": "out/src/main.js",
   "repository": {
@@ -8,15 +8,15 @@
     "url": "https://github.com/emilemil1/dbm.git"
   },
   "dependencies": {
-    "@types/dedent": "^0.7.0",
-    "@types/node": "^14.14.31",
-    "@types/ws": "^7.4.0",
     "dedent": "^0.7.0",
     "discord.js": "^12.5.1"
   },
   "author": "Emil Norén",
   "license": "ISC",
   "devDependencies": {
+    "@types/dedent": "^0.7.0",
+    "@types/node": "^14.14.31",
+    "@types/ws": "^7.4.0",
     "@typescript-eslint/eslint-plugin": "^4.15.2",
     "@typescript-eslint/parser": "^4.15.2",
     "eslint": "^7.21.0",
