@@ -22,7 +22,7 @@ jobs:
       type: steps.version-check.outputs.type
   typescript-build:
     needs: version-check
-    if: needs.version-check.outputs.changed == 'true'
+    if: needs.version-check.outputs.changed == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -33,7 +33,7 @@ jobs:
       - run: npm run build
   github-release:
     needs: [version-check, typescript-build]
-    if: needs.version-check.outputs.changed == 'true'
+    if: needs.version-check.outputs.changed == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,7 +45,7 @@ jobs:
 
   publish-npm:
     needs: [version-check, typescript-build]
-    if: needs.version-check.outputs.changed == 'true'
+    if: needs.version-check.outputs.changed == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
