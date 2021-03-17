@@ -44,7 +44,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-npm:
-    needs: [version-check]
+    needs: [version-check, typescript-build]
+    if: needs.version-check.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -52,6 +53,6 @@ jobs:
         with:
           node-version: 15
           registry-url: https://registry.npmjs.org/
-      - run: npm publish --tag ${{ needs.version-check.outputs.version }}
+      - run: npm publish --tag latest
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
