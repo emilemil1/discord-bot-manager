@@ -16,8 +16,8 @@ jobs:
         id: version-check
         with:
           diff-search: true
-      - if: steps.version-check.outputs.changed == 'true'
       - uses: ncipollo/release-action@v1
+      - if: steps.version-check.outputs.changed == 'true'
         with:
           tag: ${{ steps.version-check.outputs.version }}
           name: 'Version Update: ${{ steps.version-check.outputs.version }} (${{ steps.version-check.outputs.type }})'
