@@ -17,9 +17,9 @@ jobs:
         with:
           diff-search: true
     outputs:
-      changed: steps.check.outputs.changed
-      version: steps.check.outputs.version
-      type: steps.check.outputs.type
+      changed: ${{ steps.check.outputs.changed }}
+      version: ${{ steps.check.outputs.version }}
+      type: ${{ steps.check.outputs.type }}
   typescript-build:
     needs: version-check
     if: needs.version-check.outputs.changed == 'true'
