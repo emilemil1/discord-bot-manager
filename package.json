@@ -1,6 +1,6 @@
 {
   "name": "discord-dbm",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "Discord bot management framework.",
   "main": "out/src/main.js",
   "repository": {
