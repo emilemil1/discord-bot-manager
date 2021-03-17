@@ -1,8 +1,8 @@
 {
   "name": "discord-dbm",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Discord bot management framework.",
-  "main": "out/main.js",
+  "main": "out/src/main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/emilemil1/dbm.git"
@@ -29,7 +29,8 @@
     "out/**/*.d.ts"
   ],
   "scripts": {
-    "start": "node out/main",
+    "start": "node out/src/main",
+    "build": "tsc --build",
     "sequenceTest": "node out/test/sequenceTest"
   }
 }

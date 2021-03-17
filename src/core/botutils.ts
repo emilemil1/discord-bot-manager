@@ -1,7 +1,7 @@
-import { ObjectProxy } from "../util/proxy";
-import { Bot } from "./bot";
+import { Bot } from "./bot.js";
 import Discord from "discord.js";
-import { Module, PersistenceModule, PersistenceTransaction } from "./module";
+import { Module, PersistenceModule, PersistenceTransaction } from "./module.js";
+import { ObjectProxy } from "../util/proxy.js";
 
 class GuildConfiguration {
     private config: Bot["globalConfig"][string];
