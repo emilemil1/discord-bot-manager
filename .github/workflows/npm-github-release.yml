@@ -1,0 +1,24 @@
+# Create a new release when the package.json version tag changes
+
+name: Create Release On Package Version
+
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: EndBug/version-check@v2.0.1
+      id: version-check
+      with:
+        diff-search: true
+    - if: steps.version-check.outputs.changed == 'true'
+    - uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ steps.version-check.outputs.version }}
+        name: 'Version Update: ${{ steps.version-check.outputs.version }} (${{ steps.version-check.outputs.type }})'
+        token: ${{ secrets.GITHUB_TOKEN }}
