@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "outDir": "out",
+        "esModuleInterop": true,
+        "target": "es2020",
+        "strict": true,
+        "moduleResolution": "node",
+        "module": "esnext",
+        "sourceMap": true,
+        "declaration": true,
+        "watch": true,
+    },
+    "include": [
+        "src/**/*",
+        "test/**/*"
+    ],
+    "compileOnSave": true
+}
