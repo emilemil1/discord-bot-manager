@@ -40,12 +40,11 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ needs.version-check.outputs.version }}
-          name: 'Version Update: ${{ steps.version-check.outputs.version }} (${{ needs.version-check.outputs.type }})'
+          name: 'Version Update: ${{ needs.version-check.outputs.version }} (${{ needs.version-check.outputs.type }})'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-npm:
-    needs: [version-check, typescript-build]
-    if: needs.version-check.outputs.changed == 'true'
+    needs: [version-check]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -53,8 +52,6 @@ jobs:
         with:
           node-version: 15
           registry-url: https://registry.npmjs.org/
-      - id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-      - run: npm publish --tag ${{ steps.get_version.outputs.VERSION }}
+      - run: npm publish --tag ${{ needs.version-check.outputs.version }}
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
