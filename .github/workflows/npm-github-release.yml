@@ -8,21 +8,21 @@ on:
       - "master"
 
 jobs:
-  release:
+  version-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: EndBug/version-check@v2.0.1
-        id: version-check
+        id: check
         with:
           diff-search: true
-      - uses: ncipollo/release-action@v1
-        if: steps.version-check.outputs.changed == 'true'
-        with:
-          tag: ${{ steps.version-check.outputs.version }}
-          name: 'Version Update: ${{ steps.version-check.outputs.version }} (${{ steps.version-check.outputs.type }})'
-          token: ${{ secrets.GITHUB_TOKEN }}
-  build:
+    outputs:
+      changed: steps.version-check.outputs.changed
+      version: steps.version-check.outputs.version
+      type: steps.version-check.outputs.type
+  typescript-build:
+    needs: version-check
+    if: needs.version-check.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -31,9 +31,21 @@ jobs:
           node-version: 15
       - run: npm install
       - run: npm run build
+  github-release:
+    needs: [version-check, typescript-build]
+    if: needs.version-check.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.version-check.outputs.version }}
+          name: 'Version Update: ${{ steps.version-check.outputs.version }} (${{ needs.version-check.outputs.type }})'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-npm:
-    needs: build
+    needs: [version-check, typescript-build]
+    if: needs.version-check.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
