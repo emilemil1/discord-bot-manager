@@ -16,6 +16,8 @@ jobs:
         id: check
         with:
           diff-search: true
+          file-url: https://unpkg.com/discord-dbm@latest/package.json
+          static-checking: localIsNew
     outputs:
       changed: ${{ steps.check.outputs.changed }}
       version: ${{ steps.check.outputs.version }}
@@ -40,7 +42,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ needs.version-check.outputs.version }}
-          name: 'Version Update: ${{ needs.version-check.outputs.version }} (${{ needs.version-check.outputs.type }})'
+          name: '${{ needs.version-check.outputs.version }} (${{ needs.version-check.outputs.type }})'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-npm:
