@@ -68,6 +68,7 @@ export default class ModuleManager {
                         description: "",
                         type: [ModuleType.persistence]
                     },
+                    getOld: async () => { return {}; },
                     getGlobal: noopTransaction,
                     getGuild: noopTransaction,
                     noop: noopTransaction
