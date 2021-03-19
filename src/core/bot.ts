@@ -2,7 +2,7 @@ import Discord, { Message, MessageReaction, User, PartialUser, Guild } from "dis
 import ModuleManager from "./modulemanager.js";
 import PermissionsModule from "../modules/permissions.js";
 import Sequence from "../util/sequence.js";
-import { WebhookMessage } from "./module.js";
+import { PersistenceTransaction, WebhookMessage } from "./module.js";
 import http, { IncomingMessage } from "http";
 import { Readable } from "stream";
 import { SetupBotUtils } from "./botutils.js";
@@ -18,6 +18,7 @@ export interface BotConfigInterface {
 interface FleetingConfig {
     [key: string]: {
         prefixMatch?: RegExp;
+        commit: PersistenceTransaction["commit"];
     }
 }
 
@@ -71,6 +72,7 @@ export class Bot {
     }
 
     async shutdown(): Promise<void> {
+        await this.persistGuilds();
         await this.moduleManager.shutdownModules();
         return this.client.destroy();
     }
@@ -86,11 +88,20 @@ export class Bot {
     }
 
     private async instantiateGuild(guild: Guild): Promise<void> {
-        const gConfig = await this.moduleManager.persistence?.getGuild(guild.id, "config");
-        this.globalConfig[guild.id] = gConfig?.data || {};
-        if (gConfig !== undefined) {
-            this.fleetingConfig[guild.id] = {};
+        const gConfig = await this.moduleManager.persistence.getGuild(guild.id, "config");
+        this.globalConfig[guild.id] = gConfig.data;
+        this.fleetingConfig[guild.id] = {
+            commit: gConfig.commit
+        };
+    }
+
+    private async persistGuilds(): Promise<void> {
+        const arr = [];
+        for (const guildId in this.fleetingConfig) {
+            const guildConfig = this.fleetingConfig[guildId];
+            arr.push(guildConfig.commit());
         }
+        await Promise.all(arr);
     }
 
     private getFleetingConfig(guildId: string): FleetingConfig[string] {
@@ -201,11 +212,6 @@ export class Bot {
         for (const module of modules) {
             module.onReaction(reaction, user as User);
         }
-    }
-
-    private getGuildPrefix(guildId?: string): string {
-        if (guildId === undefined) return this.defaultPrefix;
-        return this.globalConfig[guildId].prefix || this.defaultPrefix;
     }
 
     private getGuildPrefixMatch(guildId?: string): RegExp {

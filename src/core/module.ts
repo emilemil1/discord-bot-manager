@@ -89,6 +89,7 @@ export interface CommandModule extends Module {
 }
 
 export interface PersistenceModule extends Module {
+    getOld: (id: string) => Promise<PersistenceData>;
     getGlobal: (id: string) => Promise<PersistenceTransaction>;
     getGuild: (guildId: string, id: string) => Promise<PersistenceTransaction>;
     noop: () => Promise<PersistenceTransaction>
