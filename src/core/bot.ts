@@ -15,24 +15,34 @@ export interface BotConfigInterface {
     prefix: string;
 }
 
-interface FleetingConfig {
+interface GuildConfig {
     [key: string]: {
-        prefixMatch?: RegExp;
-        commit: PersistenceTransaction<unknown>["commit"];
+        persist: {
+            prefix?: string;
+        },
+        fleeting: {
+            prefixMatch?: RegExp;
+            commit: PersistenceTransaction<unknown>["commit"];
+        }
     }
 }
 
 interface GlobalConfig {
-    [key: string]: {
-        prefix?: string;
+    migrated?: boolean;
+}
+
+interface OldConfig {
+    guilds: {
+        [key: string]: {
+            prefix?: string;
+        }
     }
 }
 
 export class Bot {
     public readonly client: Discord.Client;
     public readonly config: BotConfigInterface;
-    public readonly fleetingConfig: FleetingConfig;
-    public readonly globalConfig: GlobalConfig;
+    public readonly guildConfig: GuildConfig;
     public readonly moduleManager: ModuleManager;
     public readonly permissionsModule?: typeof PermissionsModule;
 
@@ -44,8 +54,7 @@ export class Bot {
             partials: ["MESSAGE", "REACTION"]
         });
         this.config = config;
-        this.fleetingConfig = {};
-        this.globalConfig = {};
+        this.guildConfig = {};
         this.moduleManager = new ModuleManager();
 
         this.defaultPrefix = this.config.prefix;
@@ -85,27 +94,44 @@ export class Bot {
         for (const guild of this.client.guilds.cache.values()) {
             await this.instantiateGuild(guild);
         }
+
+        const botConfig = await this.moduleManager.persistence.getGlobal<GlobalConfig>("config");
+        if (botConfig.data.migrated !== true) {
+            this.migrate();
+            botConfig.data.migrated = true;
+        }
+        botConfig.commit();
+    }
+
+    private async migrate(): Promise<void> {
+        const oldConfig = await this.moduleManager.persistence.getOld("config") as unknown as OldConfig;
+        for (const guildId in oldConfig.guilds) {
+            if (this.guildConfig[guildId] === undefined) continue;
+            this.guildConfig[guildId].persist.prefix = oldConfig.guilds[guildId].prefix;
+        }
     }
 
     private async instantiateGuild(guild: Guild): Promise<void> {
-        const gConfig = await this.moduleManager.persistence.getGuild<GlobalConfig>(guild.id, "config");
-        this.globalConfig[guild.id] = gConfig.data;
-        this.fleetingConfig[guild.id] = {
-            commit: gConfig.commit
+        const gConfig = await this.moduleManager.persistence.getGuild<GuildConfig>(guild.id, "config");
+        this.guildConfig[guild.id] = {
+            persist: gConfig.data,
+            fleeting: {
+                commit: gConfig.commit
+            }
         };
     }
 
     private async persistGuilds(): Promise<void> {
         const arr = [];
-        for (const guildId in this.fleetingConfig) {
-            const guildConfig = this.fleetingConfig[guildId];
-            arr.push(guildConfig.commit());
+        for (const guildId in this.guildConfig) {
+            const guildConfig = this.guildConfig[guildId];
+            arr.push(guildConfig.fleeting.commit());
         }
         await Promise.all(arr);
     }
 
-    private getFleetingConfig(guildId: string): FleetingConfig[string] {
-        return this.fleetingConfig[guildId];
+    private getFleetingConfig(guildId: string): GuildConfig[string]["fleeting"] {
+        return this.guildConfig[guildId].fleeting;
     }
 
     private startWebhook(): void {
@@ -219,7 +245,7 @@ export class Bot {
         const fConfig = this.getFleetingConfig(guildId);
         let match = fConfig.prefixMatch;
         if (match === undefined) {
-            const prefix = this.globalConfig[guildId].prefix;
+            const prefix = this.guildConfig[guildId].persist.prefix;
             if (prefix === undefined) {
                 return this.defaultPrefixMatch;
             }

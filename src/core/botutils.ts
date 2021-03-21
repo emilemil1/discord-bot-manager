@@ -4,8 +4,8 @@ import { Module, PersistenceModule, PersistenceTransaction } from "./module.js";
 import { ObjectProxy } from "../util/proxy.js";
 
 class GuildConfiguration {
-    private config: Bot["globalConfig"][string];
-    constructor(value: Bot["globalConfig"][string]) {
+    private config: Bot["guildConfig"][string]["persist"];
+    constructor(value: Bot["guildConfig"][string]["persist"]) {
         this.config = value;
     }
 
@@ -24,7 +24,7 @@ class GlobalConfiguration {
 
     constructor(value: Bot["config"]) {
         this.config = value;
-        this.values = new Proxy(value.values, new ObjectProxy<string>((t, k) => t[k])) as Bot["config"]["values"];
+        this.values = ObjectProxy.create(value.values, (t, k) => t[k]);
     }
 
     get defaultPrefix() {
@@ -60,19 +60,23 @@ class GuildPersistence {
     }
 }
 
+interface BotUtilsConfig {
+    guild?: Record<string, GuildConfiguration>;
+    forGuild: (id?: string) => GuildConfiguration;
+    global?: GlobalConfiguration;
+}
+
+interface BotUtilsPersistence {
+    guild?: Record<string, GuildPersistence>;
+    forGuild: (id?: string) => GuildPersistence;
+    global?: GlobalPersistence;
+}
+
 class BotUtils {
     private static botUtils: BotUtils;
     private bot!: Bot;
-    private _config!: {
-        guild?: Record<string, GuildConfiguration>;
-        forGuild: (id?: string) => GuildConfiguration;
-        global?: GlobalConfiguration;
-    }
-    private _persistence!: {
-        guild?: Record<string, GuildPersistence>;
-        forGuild: (id?: string) => GuildPersistence;
-        global?: GlobalPersistence;
-    }
+    private _config!: BotUtilsConfig
+    private _persistence!: BotUtilsPersistence
 
     constructor() {
         BotUtils.botUtils = this;
@@ -82,16 +86,16 @@ class BotUtils {
         this.botUtils.bot = bot;
         this.botUtils._config = {
             global: new GlobalConfiguration(bot.config),
-            guild: new Proxy(bot.globalConfig, new ObjectProxy<GuildConfiguration>((t, k) => new GuildConfiguration(t[k]))) as Record<string, GuildConfiguration>,
+            guild: ObjectProxy.create(bot.guildConfig, (t, k) => new GuildConfiguration(t[k].persist)),
             forGuild: (id?: string) => {
                 if (id === undefined) return new GuildConfiguration({});
-                return new GuildConfiguration(bot.globalConfig[id]);
+                return new GuildConfiguration(bot.guildConfig[id].persist);
             }
         };
         Object.freeze(this.botUtils._config);
         this.botUtils._persistence = {
             global: new GlobalPersistence(bot.moduleManager.persistence),
-            guild: new Proxy({}, new ObjectProxy<GuildPersistence>((t, k) => new GuildPersistence(bot.moduleManager.persistence, k))) as Record<string, GuildPersistence>,
+            guild: ObjectProxy.create(bot.moduleManager.persistence, (t, k) => new GuildPersistence(t, k)),
             forGuild: (id?: string) => {
                 if (id === undefined) return new GuildPersistence(bot.moduleManager.persistence, undefined);
                 return new GuildPersistence(bot.moduleManager.persistence, id);
@@ -100,16 +104,16 @@ class BotUtils {
         Object.freeze(this.botUtils._persistence);
     }
 
-    get config(): Readonly<Required<BotUtils["_config"]>> {
-        return this._config as Required<BotUtils["_config"]>;
+    get config(): Readonly<Required<BotUtilsConfig>> {
+        return this._config as Required<BotUtilsConfig>;
     }
 
     get discordClient(): Readonly<Discord.Client> {
         return this.bot.client;
     }
 
-    get storage(): Readonly<Required<BotUtils["_persistence"]>> {
-        return this._persistence as Required<BotUtils["_persistence"]>;
+    get storage(): Readonly<Required<BotUtilsPersistence>> {
+        return this._persistence as Required<BotUtilsPersistence>;
     }
 
     get modules(): Readonly<Module[]> {

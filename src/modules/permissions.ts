@@ -88,6 +88,7 @@ class PermissionsModule implements CommandModule {
         const guildRole = message.guild.roles.cache.find(guildRole => guildRole.name !== role) || { id: "*" };
         if (guildRole.id === "*" && role !== "*") {
             message.channel.send(`The role '${role}' does not exist.`);
+            transaction.commit();
             return;
         }
 
@@ -132,7 +133,10 @@ class PermissionsModule implements CommandModule {
             //Wildcard role
             const permission = guildRoles["*"];
             if (permission !== undefined && result !== true) result = permission;
-            if (result !== undefined) return result;
+            if (result !== undefined) {
+                transaction.commit();
+                return result;
+            }
             //Default permission
             if (defaultPermission === undefined) {
                 defaultPermission = this.defaultPermissions[commandString]["*"];
@@ -152,9 +156,13 @@ class PermissionsModule implements CommandModule {
             //Wildcard role
             const permission = guildRoles["*"];
             if (permission !== undefined && result !== true) result = permission;
-            if (result !== undefined) return result;
+            if (result !== undefined) {
+                transaction.commit();
+                return result;
+            }
         }
 
+        transaction.commit();
         return defaultPermission || false;
     }
 
