@@ -79,8 +79,8 @@ class PermissionsModule implements CommandModule {
 
     async setPermission(state: boolean, role: string, command: string[], message: Message): Promise<void> {
         if (message.guild === null) return;
-        const transaction = await BotUtils.storage.guild[message.guild.id].get("permissions");
-        const guild = transaction.data as Guild;
+        const transaction = await BotUtils.storage.guild[message.guild.id].get<Guild>("permissions");
+        const guild = transaction.data;
         if (guild.permissions === undefined) {
             this.initializeGuild(guild);
         }
@@ -113,8 +113,8 @@ class PermissionsModule implements CommandModule {
         if (message.guild === null) return true;
         if (message.author.id === message.guild.ownerID) return true;
 
-        const transaction = await BotUtils.storage.guild[message.guild.id].get("permissions");
-        const guild = transaction.data as Guild;
+        const transaction = await BotUtils.storage.guild[message.guild.id].get<Guild>("permissions");
+        const guild = transaction.data;
         const userRoles = message.member?.roles.cache.values() || [].values();
 
         let defaultPermission;

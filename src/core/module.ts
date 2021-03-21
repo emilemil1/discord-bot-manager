@@ -52,8 +52,8 @@ export interface PersistenceResult {
     message: string;
 }
 
-export interface PersistenceTransaction {
-    data: Omit<PersistenceData, "undefined">;
+export interface PersistenceTransaction<T> {
+    data: T;
     commit: () => Promise<PersistenceResult>
 }
 
@@ -90,9 +90,9 @@ export interface CommandModule extends Module {
 
 export interface PersistenceModule extends Module {
     getOld: (id: string) => Promise<PersistenceData>;
-    getGlobal: (id: string) => Promise<PersistenceTransaction>;
-    getGuild: (guildId: string, id: string) => Promise<PersistenceTransaction>;
-    noop: () => Promise<PersistenceTransaction>
+    getGlobal: <T>(id: string) => Promise<PersistenceTransaction<T>>;
+    getGuild: <T>(guildId: string, id: string) => Promise<PersistenceTransaction<T>>;
+    noop: <T>() => Promise<PersistenceTransaction<T>>
 }
 
 export interface WebhookModule extends Module {

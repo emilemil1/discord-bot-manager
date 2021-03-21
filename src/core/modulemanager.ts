@@ -56,9 +56,9 @@ export default class ModuleManager {
                         message: "No persistence."
                     };
                 };
-                const noopTransaction = async (): Promise<PersistenceTransaction> => {
+                const noopTransaction = async <T>(): Promise<PersistenceTransaction<T>> => {
                     return {
-                        data: {},
+                        data: {} as T,
                         commit: noopCommit
                     };
                 };
@@ -311,6 +311,9 @@ export default class ModuleManager {
 
     private validatePersistenceModule(module: PersistenceModule): string[] {
         const errors = [];
+        if (module.getOld === undefined) {
+            errors.push("Reason: Required method 'getOld' is missing");
+        }
         if (module.getGlobal === undefined) {
             errors.push("Reason: Required method 'getGlobal' is missing");
         }

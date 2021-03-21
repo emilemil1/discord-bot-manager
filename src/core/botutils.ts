@@ -39,8 +39,8 @@ class GlobalPersistence {
         this.persistence = persistence;
     }
 
-    async get(id: string): Promise<PersistenceTransaction> {
-        return this.persistence.getGlobal(id);
+    async get<T>(id: string): Promise<PersistenceTransaction<T>> {
+        return this.persistence.getGlobal<T>(id);
     }
 }
 
@@ -53,9 +53,9 @@ class GuildPersistence {
         this.key = key;
     }
 
-    async get(id: string): Promise<PersistenceTransaction> {
-        if (this.key) return this.persistence.getGuild(this.key, id);
-        return this.persistence.noop();
+    async get<T>(id: string): Promise<PersistenceTransaction<T>> {
+        if (this.key) return this.persistence.getGuild<T>(this.key, id);
+        return this.persistence.noop<T>();
 
     }
 }

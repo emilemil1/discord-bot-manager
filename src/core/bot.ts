@@ -18,7 +18,7 @@ export interface BotConfigInterface {
 interface FleetingConfig {
     [key: string]: {
         prefixMatch?: RegExp;
-        commit: PersistenceTransaction["commit"];
+        commit: PersistenceTransaction<unknown>["commit"];
     }
 }
 
@@ -88,7 +88,7 @@ export class Bot {
     }
 
     private async instantiateGuild(guild: Guild): Promise<void> {
-        const gConfig = await this.moduleManager.persistence.getGuild(guild.id, "config");
+        const gConfig = await this.moduleManager.persistence.getGuild<GlobalConfig>(guild.id, "config");
         this.globalConfig[guild.id] = gConfig.data;
         this.fleetingConfig[guild.id] = {
             commit: gConfig.commit
