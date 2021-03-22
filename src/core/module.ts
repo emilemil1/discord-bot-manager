@@ -45,16 +45,21 @@ interface PersistenceDataMap {
     [key: string]: PersistenceData;
 }
 
-export type PersistenceData = PersistenceDataType | PersistenceDataType[] | PersistenceDataMap;
+export type DeepReadonly<T> =
+    T extends unknown[] ? ReadonlyArray<DeepReadonly<T[number]>> :
+    T extends Record<string, unknown> ? DeepReadonlyObject<T> :
+    T;
 
-export interface PersistenceResult {
-    result: boolean;
-    message: string;
+type DeepReadonlyObject<T> = {
+    readonly [P in keyof T]: DeepReadonly<T[P]>;
 }
 
+export type PersistenceData = PersistenceDataType | PersistenceDataType[] | PersistenceDataMap;
+
 export interface PersistenceTransaction<T> {
-    data: T;
-    commit: () => Promise<PersistenceResult>
+    snapshot: () => T;
+    data: DeepReadonly<T>;
+    edit(handler: (data: T) => void): Promise<void>
 }
 
 //Webhook

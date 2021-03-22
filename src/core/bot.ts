@@ -22,7 +22,7 @@ interface GuildConfig {
         },
         fleeting: {
             prefixMatch?: RegExp;
-            commit: PersistenceTransaction<unknown>["commit"];
+            edit: PersistenceTransaction<GuildConfig[string]["persist"]>["edit"];
         }
     }
 }
@@ -98,9 +98,9 @@ export class Bot {
         const botConfig = await this.moduleManager.persistence.getGlobal<GlobalConfig>("config");
         if (botConfig.data.migrated !== true) {
             this.migrate();
-            botConfig.data.migrated = true;
+
+            botConfig.edit(data => data.migrated = true);
         }
-        botConfig.commit();
     }
 
     private async migrate(): Promise<void> {
@@ -112,11 +112,11 @@ export class Bot {
     }
 
     private async instantiateGuild(guild: Guild): Promise<void> {
-        const gConfig = await this.moduleManager.persistence.getGuild<GuildConfig>(guild.id, "config");
+        const gConfig = await this.moduleManager.persistence.getGuild<GuildConfig[string]["persist"]>(guild.id, "config");
         this.guildConfig[guild.id] = {
             persist: gConfig.data,
             fleeting: {
-                commit: gConfig.commit
+                edit: gConfig.edit
             }
         };
     }
@@ -125,7 +125,7 @@ export class Bot {
         const arr = [];
         for (const guildId in this.guildConfig) {
             const guildConfig = this.guildConfig[guildId];
-            arr.push(guildConfig.fleeting.commit());
+            arr.push(guildConfig.fleeting.edit(data => Object.assign(data, guildConfig.persist)));
         }
         await Promise.all(arr);
     }

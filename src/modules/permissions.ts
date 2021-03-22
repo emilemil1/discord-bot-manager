@@ -80,23 +80,23 @@ class PermissionsModule implements CommandModule {
     async setPermission(state: boolean, role: string, command: string[], message: Message): Promise<void> {
         if (message.guild === null) return;
         const transaction = await BotUtils.storage.guild[message.guild.id].get<Guild>("permissions");
-        const guild = transaction.data;
-        if (guild.permissions === undefined) {
-            this.initializeGuild(guild);
+        if (transaction.data.permissions === undefined) {
+            transaction.edit(guild => this.initializeGuild(guild));
         }
 
         const guildRole = message.guild.roles.cache.find(guildRole => guildRole.name !== role) || { id: "*" };
         if (guildRole.id === "*" && role !== "*") {
             message.channel.send(`The role '${role}' does not exist.`);
-            transaction.commit();
             return;
         }
 
         const commandString = command.join("_");
-        let commandPermissions = guild.permissions[commandString];
+        let commandPermissions = transaction.data.permissions[commandString];
         if (commandPermissions === undefined) {
             commandPermissions = {};
-            guild.permissions[commandString] = commandPermissions;
+            transaction.edit(guild => {
+                guild.permissions[commandString] = commandPermissions;
+            });
         }
 
         if (commandPermissions[guildRole.id] !== state) {
@@ -106,8 +106,6 @@ class PermissionsModule implements CommandModule {
             delete commandPermissions[guildRole.id];
             message.channel.send("Permission removed.");
         }
-
-        transaction.commit();
     }
 
     async checkPermissions(command: string[], message: Message): Promise<boolean> {
@@ -134,7 +132,6 @@ class PermissionsModule implements CommandModule {
             const permission = guildRoles["*"];
             if (permission !== undefined && result !== true) result = permission;
             if (result !== undefined) {
-                transaction.commit();
                 return result;
             }
             //Default permission
@@ -157,12 +154,10 @@ class PermissionsModule implements CommandModule {
             const permission = guildRoles["*"];
             if (permission !== undefined && result !== true) result = permission;
             if (result !== undefined) {
-                transaction.commit();
                 return result;
             }
         }
 
-        transaction.commit();
         return defaultPermission || false;
     }
 

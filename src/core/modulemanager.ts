@@ -1,5 +1,5 @@
 
-import { Module, PersistenceModule, ModuleType, CommandModule, WebhookModule, QuoteModule, ReactionModule, PersistenceResult, PersistenceTransaction } from "./module.js";
+import { Module, PersistenceModule, ModuleType, CommandModule, WebhookModule, QuoteModule, ReactionModule, PersistenceTransaction, DeepReadonly } from "./module.js";
 import Sequence from "../util/sequence.js";
 import Path from "path";
 
@@ -50,16 +50,11 @@ export default class ModuleManager {
             if (this.persistenceModule !== undefined) {
                 if (this.persistenceModule.onLoad !== undefined) await this.persistenceModule.onLoad();
             } else {
-                const noopCommit = async (): Promise<PersistenceResult> => {
-                    return {
-                        result: false,
-                        message: "No persistence."
-                    };
-                };
                 const noopTransaction = async <T>(): Promise<PersistenceTransaction<T>> => {
                     return {
-                        data: {} as T,
-                        commit: noopCommit
+                        snapshot: () => { return {} as T; },
+                        data: {} as DeepReadonly<T>,
+                        edit: () => Promise.resolve()
                     };
                 };
                 this.persistenceModule = {
